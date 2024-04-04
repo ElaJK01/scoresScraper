@@ -12,6 +12,7 @@
   "type": "module",
   "types": "module",
   "dependencies": {
+    "export-to-csv": "^1.2.4",
     "puppeteer": "^22.6.2"
   }
 }

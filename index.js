@@ -28,21 +28,32 @@ const getScores = async() => {
     const tableTitle = document.querySelector(".hlavicka_dostihu").innerText
     const tables = document.querySelectorAll(".ram")
     const tabs = Array.from(tables, table => {
-      const rows = table.querySelectorAll('tr');
-      return Array.from(rows, row => {
-        const columns = row.querySelectorAll('td');
-        const headers = Array.from(row.querySelectorAll('th'), header => header.innerText);
-        const mergedRows = Array.from(columns, column => column.innerText).concat(headers);
-        return mergedRows
-      })
-    })
-    const noEmptyTables = tabs.filter(arr => arr.length !== 0)
-    return noEmptyTables
+      const rows = Array.from(table.querySelectorAll('tr'));
+      const cells = rows.map(row => {
+        const columns = Array.from(row.querySelectorAll('td'));
+        const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
+        return columns.map((column) =>   column.innerText).concat(headers)
 
+      })
+      return {...cells}
+    })
+
+    const isEmptyObject = (obj) => {
+      for (const prop in obj) {
+        if (Object.hasOwn(obj, prop)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    const judges = tabs.pop()
+    return {raceTitle, tabs: tabs.filter(el => !isEmptyObject(el)), judges}
   });
 
 
 console.log(clickDateButton)
+
 
   //await browser.close();
 
