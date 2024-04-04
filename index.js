@@ -25,30 +25,33 @@ const getScores = async() => {
     const dateButtons = [...leftButtonList].filter((node) => dateRegexp.test(node.innerText))
     dateButtons[0].click()
     const raceTitle = document.querySelector(".text8").innerText
-    const tableTitle = document.querySelector(".hlavicka_dostihu").innerText
+    const tableTitle = Array.from(document.querySelectorAll(".hlavicka_dostihu"), (title, index) => title.innerText)
     const tables = document.querySelectorAll(".ram")
-    const tabs = Array.from(tables, table => {
-      const rows = Array.from(table.querySelectorAll('tr'));
-      const cells = rows.map(row => {
-        const columns = Array.from(row.querySelectorAll('td'));
-        const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
-        return columns.map((column) =>   column.innerText).concat(headers)
-
-      })
-      return {...cells}
+    const tabs = Array.from(tables, ((table, index) => {
+      const rows = Array.from(table.querySelectorAll('tr'))
+      // const cells = rows.map(row => {
+      //   const columns = Array.from(row.querySelectorAll('td'));
+      //   const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
+      //   return columns.map((column) =>   column.innerText).concat(headers)
+      //
+      // })
+      // return {...cells}
+      return rows.map(el => el.innerText);
     })
+    )
 
-    const isEmptyObject = (obj) => {
-      for (const prop in obj) {
-        if (Object.hasOwn(obj, prop)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
+    // const isEmptyObject = (obj) => {
+    //   for (const prop in obj) {
+    //     if (Object.hasOwn(obj, prop)) {
+    //       return false;
+    //     }
+    //   }
+    //   return true;
+    // }
+    //
     const judges = tabs.pop()
-    return {raceTitle, tabs: tabs.filter(el => !isEmptyObject(el)), judges}
+    return {raceTitle, tabs: tabs.filter(el => el.length !== 0), judges, tabTitles: tableTitle}
+
   });
 
 
