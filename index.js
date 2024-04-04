@@ -31,11 +31,13 @@ const getScores = async() => {
       const rows = table.querySelectorAll('tr');
       return Array.from(rows, row => {
         const columns = row.querySelectorAll('td');
-        const headers = row.querySelectorAll('th');
-        return Array.from(columns, column => column.innerText).concat(Array.from(headers, header => header.innerText));
+        const headers = Array.from(row.querySelectorAll('th'), header => header.innerText);
+        const mergedRows = Array.from(columns, column => column.innerText).concat(headers);
+        return mergedRows
       })
     })
-    return tabs
+    const noEmptyTables = tabs.filter(arr => arr.length !== 0)
+    return noEmptyTables
 
   });
 
