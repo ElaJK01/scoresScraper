@@ -26,13 +26,16 @@ const getScores = async() => {
     dateButtons[0].click()
     const raceTitle = document.querySelector(".text8").innerText
     const tableTitle = document.querySelector(".hlavicka_dostihu").innerText
-    // const tables = document.querySelectorAll(".ram")
-    // const table = [...tables].map(table => table.querySelector('tr').innerText || [])
-    const rows = document.querySelectorAll('.ram tr');
-    return Array.from(rows, row => {
-      const columns = row.querySelectorAll('td');
-      return Array.from(columns, column => column.innerText);
-    });
+    const tables = document.querySelectorAll(".ram")
+    const tabs = Array.from(tables, table => {
+      const rows = table.querySelectorAll('tr');
+      return Array.from(rows, row => {
+        const columns = row.querySelectorAll('td');
+        return Array.from(columns, column => column.innerText);
+      });
+    })
+
+    return tabs
 
   });
 
