@@ -19,19 +19,25 @@ const getScores = async() => {
     waitUntil: "domcontentloaded",
   });
 
-  const searchScores = await page.evaluate(() => {
+  const clickDateButton = await page.evaluate(() => {
     const dateRegexp = new RegExp('\\d{2}([.\\-])\\d{2}([.\\-])\\d{4}');
     const leftButtonList = document.querySelectorAll(".button-left");
-    const dateButton = [...leftButtonList].filter((node) => dateRegexp.test(node.innerText))
-    dateButton[0].click()
-    const tableTitle = document.querySelector(".text8").innerText
-    console.log('title', tableTitle)
+    const dateButtons = [...leftButtonList].filter((node) => dateRegexp.test(node.innerText))
+    dateButtons[0].click()
+    const raceTitle = document.querySelector(".text8").innerText
+    const tableTitle = document.querySelector(".hlavicka_dostihu").innerText
+    // const tables = document.querySelectorAll(".ram")
+    // const table = [...tables].map(table => table.querySelector('tr').innerText || [])
+    const rows = document.querySelectorAll('.ram tr');
+    return Array.from(rows, row => {
+      const columns = row.querySelectorAll('td');
+      return Array.from(columns, column => column.innerText);
+    });
 
-
-    return 'clicked' +dateButton[1].innerText
   });
-  console.log('search scores', searchScores);
 
+
+console.log(clickDateButton)
 
   //await browser.close();
 
