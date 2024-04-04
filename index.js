@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-
+import * as fs from 'fs'
 const getScores = async() => {
   // Start a Puppeteer session with:
   // - a visible browser (`headless: false` - easier to debug because you'll see the browser in action)
@@ -25,38 +25,41 @@ const getScores = async() => {
     const dateButtons = [...leftButtonList].filter((node) => dateRegexp.test(node.innerText))
     dateButtons[0].click()
     const raceTitle = document.querySelector(".text8").innerText
-    const tableTitle = Array.from(document.querySelectorAll(".hlavicka_dostihu"), (title, index) => title.innerText)
+    const tableTitle = Array.from(document.querySelectorAll(".hlavicka_dostihu"), (title) => title.innerText)
     const tables = document.querySelectorAll(".ram")
-    const tabs = Array.from(tables, ((table, index) => {
+    const tabs = Array.from(tables, ((table) => {
       const rows = Array.from(table.querySelectorAll('tr'))
-      // const cells = rows.map(row => {
-      //   const columns = Array.from(row.querySelectorAll('td'));
-      //   const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
-      //   return columns.map((column) =>   column.innerText).concat(headers)
-      //
-      // })
-      // return {...cells}
-      return rows.map(el => el.innerText);
+      const cells = rows.map(row => {
+        const columns = Array.from(row.querySelectorAll('td'));
+        const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
+        return columns.map((column) =>   column.innerText).concat(headers)
+
+      })
+      return {...cells}
+      //return rows.map(el => el.innerText);
     })
     )
 
-    // const isEmptyObject = (obj) => {
-    //   for (const prop in obj) {
-    //     if (Object.hasOwn(obj, prop)) {
-    //       return false;
-    //     }
-    //   }
-    //   return true;
-    // }
-    //
+    const isEmptyObject = (obj) => {
+      for (const prop in obj) {
+        if (Object.hasOwn(obj, prop)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     const judges = tabs.pop()
-    return {raceTitle, tabs: tabs.filter(el => el.length !== 0), judges, tabTitles: tableTitle}
+    return {raceTitle, tabs: tabs.filter(el => !isEmptyObject(el)), judges, tabTitles: tableTitle}
 
   });
-
-
-console.log(clickDateButton)
-
+  console.log(clickDateButton)
+  const csv = JSON.stringify(clickDateButton);
+  const path = `./downloads/file${Date.now()}.csv`;
+  fs.writeFile(path, csv, (err) => {
+    if (err) { throw err; } else {
+      console.log("File written successfully\n");
+    }})
 
   //await browser.close();
 
