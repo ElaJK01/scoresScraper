@@ -31,10 +31,10 @@ const getScores = async() => {
       const rows = table.querySelectorAll('tr');
       return Array.from(rows, row => {
         const columns = row.querySelectorAll('td');
-        return Array.from(columns, column => column.innerText);
-      });
+        const headers = row.querySelectorAll('th');
+        return Array.from(columns, column => column.innerText).concat(Array.from(headers, header => header.innerText));
+      })
     })
-
     return tabs
 
   });
