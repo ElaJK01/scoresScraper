@@ -7,48 +7,14 @@ const scrapeScores = async (page) => {
     return titles.map(title => title.innerText)
   });
   const tables = await page.$$eval(".ram", tables => {
-    return tables.map((table) => table.innerText)
+    return tables.map((table) => table.innerText).filter(string => string !== '').map(element => [element])
   })
-  const judges = tables.pop()
-  // if (tables.length > 0) {
-  //   const tabs = tables.map(table => {
-  //     const rows = table.querySelectorAll('tr');
-  //     const cells = rows.map(
-  //       row => {
-  //         const columns = Array.from(row.querySelectorAll('td'));
-  //         const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
-  //         return columns.map((column) =>   column.innerText).concat(headers) }
-  //     )
-  //     return {...cells}
-  //   })
-  //   const isEmptyObject = (obj) => {
-  //     for (const prop in obj) {
-  //       if (Object.hasOwn(obj, prop)) {
-  //         return false;
-  //       }
-  //     }
-  //     return true;
-  //   }
-  //
-  //   const judges = tabs.pop()
-  //   return {raceTitle, tabs: tabs.filter(el => !isEmptyObject(el)), judges, tabTitles: tableTitle}
-  // }
-  // else {
-  //   console.log('No race scores');
-  // }
-  // const tabs = Array.from(tables, ((table) => {
-  //     const rows = Array.from(table.querySelectorAll('tr'))
-  //     const cells = rows.map(row => {
-  //       const columns = Array.from(row.querySelectorAll('td'));
-  //       const headers = Array.from(row.querySelectorAll('th'), header => header.innerText)
-  //       return columns.map((column) =>   column.innerText).concat(headers)
-  //
-  //     })
-  //     return {...cells}
-  //     //return rows.map(el => el.innerText);
-  //   })
-  // )
-  return {raceDateTitle: raceTitle, tables, judges}
+
+  const extendedTables = []
+  tables.forEach((table, index) => extendedTables.push({tableTitle: tablesTitles[index], tableRows: table}) )
+  const judges = extendedTables.pop()
+
+  return {raceDateTitle: raceTitle, tables: extendedTables, judges}
 }
 const getScores = async() => {
   // Start a Puppeteer session with:
@@ -80,7 +46,6 @@ const getScores = async() => {
           await scrapeScores(page).then(res => data.push({[`page${i}`]: res})).catch(err => console.log(err))
     }
   } else {console.log('nothing to collect')}
-console.log('data', data)
 
 //write data to csv
   const csv = JSON.stringify(data);
@@ -90,8 +55,7 @@ console.log('data', data)
       console.log("File written successfully\n");
     }})
 
-  //await browser.close();
-
+  await browser.close();
 
 }
 
