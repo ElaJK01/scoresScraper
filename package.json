@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint index.js",
+    "lint:fix": "eslint --fix index.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +16,9 @@
   "types": "module",
   "dependencies": {
     "puppeteer": "^22.6.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "3.2.5"
   }
 }
