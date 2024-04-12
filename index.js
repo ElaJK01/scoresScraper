@@ -48,7 +48,7 @@ const scrapeScores = async (page) => {
   return {raceDateTitle: raceTitle, tables: extendedTables};
 };
 
-const getScores = async () => {
+const getScores = async (baseUrl, firstYear) => {
   // Start a Puppeteer session with:
   const browser = await puppeteer.launch({
     headless: false,
@@ -59,13 +59,13 @@ const getScores = async () => {
   const page = await browser.newPage();
 
   //base url
-  const baseUrl = 'http://dostihyjc.cz/index.php?page=5&stat=3';
+  //const baseUrl = 'http://dostihyjc.cz/index.php?page=5&stat=3';
 
   //last page of pagination is current year
   const lastPage = new Date().getFullYear();
 
   //first page of pagination is 1997 year
-  let currentPage = 1997;
+  let currentPage = firstYear;
   let dataAll = [];
 
   let lastPageReached = false;
@@ -83,24 +83,41 @@ const getScores = async () => {
 
     await scrapePageYear(page)
       .then((res) => {
-        return dataAll.push(res);
+        return dataAll.unshift(res);
       })
       .catch((err) => console.log(err));
 
     if (currentPage === lastPage) {
-      console.log('No more pages. Exiting.');
+      console.log('No more pages.');
       lastPageReached = true;
     } else {
       // increment the page counter
       currentPage++;
-
-      // add a delay to give the page some time to load (adjust as needed)
       new Promise((r) => setTimeout(r, 3000)); // 3 seconds
     }
   }
+  await browser.close();
+  return dataAll;
+};
 
+const getAllScores = async () => {
+  const startTime = new Date().getTime();
+
+  const links = [
+    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
+    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=2`, country: 'Slovensko', startYear: 1989},
+    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=3`, country: 'abroad', startYear: 1997},
+  ];
+  let data = [];
+
+  for (let i = 0; i < links.length; i++) {
+    await getScores(links[i].baseUrl, links[i].startYear)
+      .then((res) => data.push({country: links[i].country, results: res}))
+      .catch(console.error);
+  }
+  console.log('data', data);
   //write data to csv
-  const csv = JSON.stringify(dataAll);
+  const csv = JSON.stringify(data);
   const path = `./downloads/file${Date.now()}.csv`;
   fs.writeFile(path, csv, (err) => {
     if (err) {
@@ -109,8 +126,9 @@ const getScores = async () => {
       console.log('File written successfully\n');
     }
   });
-
-  await browser.close();
+  const endTime = new Date().getTime();
+  const timeTaken = endTime - startTime;
+  console.log('Function took ' + timeTaken + ' milliseconds');
 };
 
-getScores();
+getAllScores();
