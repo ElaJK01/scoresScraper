@@ -21,7 +21,7 @@ export const getHorsesScores = async (horseId) => {
   return {horseCareerData: horseCareerData || {}, horseRacesData: horseRacesData || []};
 };
 
-export const getAllPolishHorses = async (browser) => {
+export const getAllPolishHorses = async () => {
   const response = await axios
     .get('https://homas.pkwk.org/homas/race/search/horse')
     .then((res) => {
