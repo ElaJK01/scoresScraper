@@ -45,7 +45,7 @@ export const getAllPolishHorses = async () => {
       .catch(console.error);
     data.push({horseData: horseData || {}, horseScores});
   }
-  fs.writeFile('./downloads/horses.json', JSON.stringify(data), (err) => {
+  fs.writeFile(`./downloads/horses_${Date.now()}.json`, JSON.stringify(data), 'utf-8', (err) => {
     // Checking for errors
     if (err) throw err;
     // Success
