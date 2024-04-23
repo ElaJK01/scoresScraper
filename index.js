@@ -2,11 +2,12 @@ import * as fs from 'fs';
 import {getScores} from './library/czechWebFn.js';
 import {getAllPolishHorses} from './library/polishHorsesFn.js';
 import * as util from 'node:util';
+import jsonexport from 'jsonexport';
 
 const getAllCzechScores = async () => {
   const links = [
-    // {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
-    // {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=2`, country: 'Slovensko', startYear: 1989},
+    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
+    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=2`, country: 'Slovensko', startYear: 1989},
     {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=3`, country: 'abroad', startYear: 1997},
   ];
   let data = [];
@@ -20,15 +21,28 @@ const getAllCzechScores = async () => {
   console.log(util.inspect(data, {depth: null, colors: true}));
 
   //write data to csv
-  const json = JSON.stringify(data);
-  const path = `./downloads/file_Czech_Data${Date.now()}.json`;
-  fs.writeFile(path, json, 'utf-8', (err) => {
-    if (err) {
-      throw err;
-    } else {
-      console.log('File written successfully\n');
-    }
+  await jsonexport(data, function (err, csv) {
+    if (err) return console.error(err);
+    const pathCsv = `./downloads/file_Czech_Data${Date.now()}.csv`;
+    fs.writeFile(pathCsv, csv, 'utf-8', (err) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log('File written successfully\n');
+      }
+    });
   });
+
+  //write data to json
+  // const json = JSON.stringify(data);
+  // const path = `./downloads/file_Czech_Data${Date.now()}.json`;
+  // fs.writeFile(path, json, 'utf-8', (err) => {
+  //   if (err) {
+  //     throw err;
+  //   } else {
+  //     console.log('File written successfully\n');
+  //   }
+  // });
 };
 //
 getAllCzechScores();
