@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import {transformRowsArray} from './helpers.js';
 
 export const scrapePageYear = async (page) => {
   const pageUrl = await page.evaluate(() => document.location.href);
@@ -15,7 +16,7 @@ export const scrapePageYear = async (page) => {
   const dateRegexp = new RegExp('\\d{2}([.\\-])\\d{2}([.\\-])\\d{4}');
   const datesButtonTexts = leftButtonList.filter((text) => dateRegexp.test(text));
   let data = [];
-  //click every left button to nvigate to page with race scores
+  //click every left button to navigate to page with race scores
   if (datesButtonTexts.length > 0) {
     for (let i = 0; i < datesButtonTexts.length; i++) {
       await page.click(`text=${datesButtonTexts[i]}`);
@@ -38,11 +39,17 @@ export const scrapeScores = async (page) => {
     return tables
       .map((table) => table.innerText)
       .filter((string) => string !== '')
-      .map((element) => [element]);
+      .map((element) => element.split('\n').map((el) => el.split('\\')));
   });
 
   const extendedTables = [];
-  tables.forEach((table, index) => extendedTables.push({tableTitle: tablesTitles[index], tableRows: table}));
+  //transform data from array with strings to array of objects representing one row of the score table
+  tables.forEach((table, index) =>
+    extendedTables.push({
+      tableTitle: tablesTitles[index],
+      tableRows: transformRowsArray(table.map((row) => row[0].split('\t'))),
+    })
+  );
 
   return {raceDateTitle: raceTitle, tables: extendedTables};
 };
@@ -57,13 +64,10 @@ export const getScores = async (baseUrl, firstYear) => {
   // Open a new page
   const page = await browser.newPage();
 
-  //base url
-  //const baseUrl = 'http://dostihyjc.cz/index.php?page=5&stat=3';
-
   //last page of pagination is current year
   const lastPage = new Date().getFullYear();
 
-  //first page of pagination is 1997 year
+  //first page of pagination is firstYear
   let currentPage = firstYear;
   let dataAll = [];
 

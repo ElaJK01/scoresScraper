@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import {getScores} from './library/czechWebFn.js';
 import {getAllPolishHorses} from './library/polishHorsesFn.js';
+import * as util from 'node:util';
 
 const getAllCzechScores = async () => {
   const links = [
@@ -15,7 +16,9 @@ const getAllCzechScores = async () => {
       .then((res) => data.push({country: links[i].country, results: res}))
       .catch(console.error);
   }
-  console.log('data', data);
+
+  console.log(util.inspect(data, {depth: null, colors: true}));
+
   //write data to csv
   const csv = JSON.stringify(data);
   const path = `./downloads/file_Czech_Data${Date.now()}.csv`;
@@ -28,6 +31,6 @@ const getAllCzechScores = async () => {
   });
 };
 //
-// getAllCzechScores();
+getAllCzechScores();
 
-getAllPolishHorses();
+// getAllPolishHorses();
