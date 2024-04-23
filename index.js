@@ -5,8 +5,8 @@ import * as util from 'node:util';
 
 const getAllCzechScores = async () => {
   const links = [
-    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
-    {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=2`, country: 'Slovensko', startYear: 1989},
+    // {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
+    // {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=2`, country: 'Slovensko', startYear: 1989},
     {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=3`, country: 'abroad', startYear: 1997},
   ];
   let data = [];
@@ -20,9 +20,9 @@ const getAllCzechScores = async () => {
   console.log(util.inspect(data, {depth: null, colors: true}));
 
   //write data to csv
-  const csv = JSON.stringify(data);
-  const path = `./downloads/file_Czech_Data${Date.now()}.csv`;
-  fs.writeFile(path, csv, (err) => {
+  const json = JSON.stringify(data);
+  const path = `./downloads/file_Czech_Data${Date.now()}.json`;
+  fs.writeFile(path, json, 'utf-8', (err) => {
     if (err) {
       throw err;
     } else {
