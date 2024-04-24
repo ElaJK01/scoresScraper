@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as fs from 'node:fs';
+import jsonexport from 'jsonexport';
 
 //get horse's scores
 export const getHorsesScores = async (horseId) => {
@@ -45,11 +46,25 @@ export const getAllPolishHorses = async () => {
       .catch(console.error);
     data.push({horseData: horseData || {}, horseScores});
   }
-  fs.writeFile(`./downloads/horses_${Date.now()}.json`, JSON.stringify(data), 'utf-8', (err) => {
-    // Checking for errors
-    if (err) throw err;
-    // Success
-    console.log('Done writing', horsesIds.length, 'horses data');
+
+  //write data to csv
+  await jsonexport(data, function (err, csv) {
+    if (err) return console.error(err);
+    const pathCsv = `./downloads/file_polish_horses${Date.now()}.csv`;
+    fs.writeFile(pathCsv, csv, 'utf-8', (err) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log('File written successfully\n');
+      }
+    });
   });
-  //return data;
+
+  //write data to json
+  // fs.writeFile(`./downloads/horses_${Date.now()}.json`, JSON.stringify(data), 'utf-8', (err) => {
+  //   // Checking for errors
+  //   if (err) throw err;
+  //   // Success
+  //   console.log('Done writing', horsesIds.length, 'horses data');
+  // });
 };
