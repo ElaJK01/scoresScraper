@@ -1,8 +1,6 @@
 import puppeteer from 'puppeteer';
-import {transformRowsArray} from './helpers.js';
+import {transformRowsArray, writeToCsv} from './helpers.js';
 import util from 'node:util';
-import jsonexport from 'jsonexport';
-import fs from 'fs';
 
 export const scrapeScores = async (page) => {
   const raceTitle = await page.$eval('.text8', (title) => title.innerText);
@@ -122,29 +120,5 @@ export const getAllCzechScores = async () => {
 
   console.log(util.inspect(data, {depth: null, colors: true}));
 
-  const date = new Date(Date.now()).toISOString();
-
-  //write data to csv
-  await jsonexport(data, function (err, csv) {
-    if (err) return console.error(err);
-    const pathCsv = `./downloads/file_Czech_Data${date}.csv`;
-    fs.writeFile(pathCsv, csv, 'utf-8', (err) => {
-      if (err) {
-        throw err;
-      } else {
-        console.log('File written successfully\n');
-      }
-    });
-  });
-
-  //write data to json
-  // const json = JSON.stringify(data);
-  // const path = `./downloads/file_Czech_Data${Date.now()}.json`;
-  // fs.writeFile(path, json, 'utf-8', (err) => {
-  //   if (err) {
-  //     throw err;
-  //   } else {
-  //     console.log('File written successfully\n');
-  //   }
-  // });
+  await writeToCsv(data, 'czech_races_data');
 };

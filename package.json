@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint index.js",
-    "lint:fix": "eslint --fix index.js",
+    "lint": "eslint \"**/*.js\" --ignore-pattern node_modules/",
+    "lint:fix": "eslint --fix \"**/*.js\" --ignore-pattern node_modules/",
     "start": "node index.js"
   },
   "keywords": [],
