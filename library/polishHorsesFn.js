@@ -22,6 +22,19 @@ export const getHorsesScores = async (horseId) => {
   return {horseCareerData: horseCareerData || {}, horseRacesData: horseRacesData || []};
 };
 
+export const getHorseData = async (horseId) => {
+  const horseData = await axios
+    .get(`https://homas.pkwk.org/homas/race/search/horse/${horseId}`)
+    .then((response) => response.data)
+    .catch((error) => console.log(`no data about horse id number ${horseId} due to: ${error}`));
+  const horseScores = await getHorsesScores(horseId)
+    .then((response) => {
+      return response;
+    })
+    .catch((error) => `no data with scores of horse ${horseId}: ${error}`);
+  return {horseData: horseData || {}, horseScores};
+};
+
 export const getAllPolishHorses = async () => {
   const response = await axios
     .get('https://homas.pkwk.org/homas/race/search/horse')
@@ -38,20 +51,12 @@ export const getAllPolishHorses = async () => {
     let data = [];
     for (let i = 0; i < horsesIds.length; i++) {
       const horseId = horsesIds[i];
-      const horseData = await axios
-        .get(`https://homas.pkwk.org/homas/race/search/horse/${horseId}`)
-        .then((response) => response.data)
-        .catch((error) => console.log(`no data about horse id number ${horseId} due to: ${error}`));
-      const horseScores = await getHorsesScores(horseId)
-        .then((response) => {
-          return response;
-        })
-        .catch((error) => `no data with scores of horse ${horseId}: ${error}`);
-      data.push({horseData: horseData || {}, horseScores});
+      const horseData = await getHorseData(horseId);
+      data.push(horseData);
     }
 
-    console.log(util.inspect(data, {depth: null, colors: true}));
-
-    await writeToCsv(data, 'polish_horses_data');
+    //console.log(util.inspect(data, {depth: null, colors: true}));
+    //await writeToCsv(data, 'polish_horses_data');
+    return data;
   }
 };

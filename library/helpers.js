@@ -1,5 +1,6 @@
 import jsonexport from 'jsonexport';
 import fs from 'node:fs';
+import axios from 'axios';
 
 export const createEntries = (arr1, arr2) => {
   let entries = [];
@@ -31,4 +32,22 @@ export const writeToCsv = async (data, text) => {
       }
     });
   });
+};
+
+export const checkNewPolishHorses = async () => {
+  const allHorses = await axios
+    .get('https://homas.pkwk.org/homas/race/search/horse')
+    .then((res) => {
+      console.log('all horses have been fetched');
+      return res;
+    })
+    .catch((error) => console.log(`unable to get all horses data:`, error));
+  const horses = allHorses ? allHorses.data.filter((horse) => horse.dateOfBirth >= 2004) : [];
+  if (horses.length < 1) {
+    console.log('no horses meeting the criteria');
+  } else {
+    const horsesIds = horses.map((horse) => horse.id);
+    console.log('number of horses', horsesIds.length);
+    return horsesIds;
+  }
 };
