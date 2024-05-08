@@ -21,7 +21,7 @@ export const transformRowsArray = (array) => {
 
 export const writeToCsv = async (data, text) => {
   const date = new Date(Date.now()).toISOString();
-  const pathCsv = `./downloads/file_${text}_${date}.csv`;
+  const pathCsv = `./downloads/${text}.csv`;
   await jsonexport(data, function (err, csv) {
     if (err) return console.error(err);
     fs.writeFile(pathCsv, csv, 'utf-8', (err) => {
@@ -50,4 +50,15 @@ export const checkNewPolishHorses = async () => {
     console.log('number of horses', horsesIds.length);
     return horsesIds;
   }
+};
+
+export const writeToJson = async (data, text) => {
+  const pathJson = `./downloads/${text}.json`;
+  fs.writeFile(pathJson, JSON.stringify(data), (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      // file written successfully
+    }
+  });
 };

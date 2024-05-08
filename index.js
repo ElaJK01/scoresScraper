@@ -1,7 +1,7 @@
 import {getAllCzechScores, getAllPagesIds, getScoresFromNewButtons} from './library/czechWebFn.js';
 import {getAllPolishHorses, getHorseData} from './library/polishHorsesFn.js';
 import cron from 'node-cron';
-import {checkNewPolishHorses} from './library/helpers.js';
+import {checkNewPolishHorses, writeToJson} from './library/helpers.js';
 import {JSONFilePreset} from 'lowdb/node';
 import {
   pathOr,
@@ -18,15 +18,20 @@ import {
   flatten,
   length,
   equals,
+  concat,
+  slice,
 } from 'ramda';
 import util from 'node:util';
+import fs from 'node:fs';
 
-const db = await JSONFilePreset('db.json', {polishHorses: [], czechRaces: []});
+//const db = await JSONFilePreset('db.json', {polishHorses: [], czechRaces: []});
 
-cron.schedule('02 13 * * *', async () => {
+const czechRacesPath = `./downloads/czech_races_data.json`;
+
+cron.schedule('52 8 * * *', async () => {
   //const today = new Date().toJSON().slice(0, 10);
-  const horses = pathOr([], ['data', 'polishHorses'], db);
-  const czechRaces = pathOr([], ['data', 'czechRaces'], db);
+  //const horses = pathOr([], ['data', 'polishHorses'], db);
+  //const czechRaces = pathOr([], ['data', 'czechRaces'], db);
   // if (isEmpty(horses)) {
   //   //get all horses
   //   await getAllPolishHorses()
@@ -50,30 +55,33 @@ cron.schedule('02 13 * * *', async () => {
   //     await db.update(({polishHorses}) => polishHorses.push(horseData));
   //   }, horsesToBeFetched);
   // }
-  if (isEmpty(czechRaces)) {
+  if (!fs.existsSync(czechRacesPath)) {
     //get all races
-    await getAllCzechScores()
+    console.log('not exists!');
+    const data = await getAllCzechScores()
       .then((res) => {
-        db.data.czechRaces = res;
+        console.log('finished');
+        return res;
       })
       .catch((err) => console.log('could not write czech scores'));
-    await db.write();
+    await writeToJson(data, 'czech_races_data');
   } else {
+    const oldData = JSON.parse(fs.readFileSync(czechRacesPath, {encoding: 'utf8', flag: 'r'}));
+    const oldIds = map((element) => prop('id', element), oldData);
     //get new races
     const newIdList = await getAllPagesIds()
       .then((res) => flatten(res))
       .catch((err) => console.log(err));
-    const currentPageIds = pipe(map((element) => propOr('', 'id'), filter(!equals(''))))(czechRaces);
-    console.log('current ids', currentPageIds);
     const newButtons = pipe(
-      map((element) => (!includes(element.id, currentPageIds) ? element : null)),
+      map((element) => (!includes(element.id, oldIds) ? element : null)),
       filter((id) => isNotNil(id))
     )(newIdList);
-    console.log('buttons ids', newButtons, 'long:', length(newButtons));
-    await getScoresFromNewButtons(newButtons)
+    const updatedData = await getScoresFromNewButtons(newButtons)
       .then((response) => {
-        console.log(util.inspect(response, {depth: null, colors: true}));
+        return concat(response, oldData);
       })
       .catch((error) => console.log(error));
+    await fs.unlinkSync(czechRacesPath);
+    await writeToJson(updatedData, 'czech_races_data');
   }
 });
