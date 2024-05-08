@@ -8,7 +8,7 @@ import fs from 'node:fs';
 const czechRacesPath = `./downloads/czech_races_data.json`;
 const polishHorsesPath = `./downloads/polish_horses_data.json`;
 
-cron.schedule('18 11 * * *', async () => {
+cron.schedule('00 18 * * *', async () => {
   const today = new Date().toJSON().slice(0, 10);
   if (!fs.existsSync(polishHorsesPath)) {
     console.log('not exist');
