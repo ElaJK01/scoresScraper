@@ -2,59 +2,45 @@ import {getAllCzechScores, getAllPagesIds, getScoresFromNewButtons} from './libr
 import {getAllPolishHorses, getHorseData} from './library/polishHorsesFn.js';
 import cron from 'node-cron';
 import {checkNewPolishHorses, writeToJson} from './library/helpers.js';
-import {JSONFilePreset} from 'lowdb/node';
-import {
-  pathOr,
-  isEmpty,
-  map,
-  path,
-  includes,
-  pipe,
-  filter,
-  isNotNil,
-  forEach,
-  prop,
-  propOr,
-  flatten,
-  length,
-  equals,
-  concat,
-  slice,
-} from 'ramda';
-import util from 'node:util';
+import {map, path, includes, pipe, filter, isNotNil, prop, flatten, concat} from 'ramda';
 import fs from 'node:fs';
 
-//const db = await JSONFilePreset('db.json', {polishHorses: [], czechRaces: []});
-
 const czechRacesPath = `./downloads/czech_races_data.json`;
+const polishHorsesPath = `./downloads/polish_horses_data.json`;
 
-cron.schedule('52 8 * * *', async () => {
-  //const today = new Date().toJSON().slice(0, 10);
-  //const horses = pathOr([], ['data', 'polishHorses'], db);
-  //const czechRaces = pathOr([], ['data', 'czechRaces'], db);
-  // if (isEmpty(horses)) {
-  //   //get all horses
-  //   await getAllPolishHorses()
-  //     .then((res) => {
-  //       db.data.polishHorses = res;
-  //     })
-  //     .catch((err) => console.log('could not write polish horses data to db'));
-  //   await db.write();
-  // } else {
-  //   //get new horses
-  //   const allNewHorsesIdsFetched = await checkNewPolishHorses();
-  //   const currentHorsesIds = map((horse) => path(['horseData', 'id'], horse), horses);
-  //   const horsesToBeFetched = pipe(
-  //     map((id) => (!includes(id, currentHorsesIds) ? id : null)),
-  //     filter((id) => isNotNil(id))
-  //   )(allNewHorsesIdsFetched);
-  //   await forEach(async (id) => {
-  //     const horseData = await getHorseData(id)
-  //       .then((res) => res)
-  //       .catch(console.error);
-  //     await db.update(({polishHorses}) => polishHorses.push(horseData));
-  //   }, horsesToBeFetched);
-  // }
+cron.schedule('18 11 * * *', async () => {
+  const today = new Date().toJSON().slice(0, 10);
+  if (!fs.existsSync(polishHorsesPath)) {
+    console.log('not exist');
+    //get all horses
+    const polishHorses = await getAllPolishHorses()
+      .then((res) => {
+        return res;
+      })
+      .catch((err) => console.log('could not write polish horses data to db'));
+    await writeToJson(polishHorses, 'polish_horses_data');
+  } else {
+    //get new horses
+    console.log('exist');
+    const allNewHorsesIdsFetched = await checkNewPolishHorses();
+    const oldHorsesData = JSON.parse(fs.readFileSync(polishHorsesPath, {encoding: 'utf8', flag: 'r'}));
+    const currentHorsesIds = map((horse) => path(['horseData', 'id'], horse), oldHorsesData);
+    const horsesToBeFetched = pipe(
+      map((id) => (!includes(id, currentHorsesIds) ? id : null)),
+      filter((id) => isNotNil(id))
+    )(allNewHorsesIdsFetched);
+    const newDataFetched = [];
+    for (let i = 0; i < horsesToBeFetched.length; i++) {
+      const id = horsesToBeFetched[i];
+      const horseData = await getHorseData(id)
+        .then((res) => res)
+        .catch(console.error);
+      newDataFetched.push(horseData);
+    }
+    const newData = concat(oldHorsesData, newDataFetched);
+    await fs.unlinkSync(polishHorsesPath);
+    await writeToJson(newData, 'polish_horses_data');
+  }
   if (!fs.existsSync(czechRacesPath)) {
     //get all races
     console.log('not exists!');
