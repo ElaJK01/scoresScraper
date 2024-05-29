@@ -9,7 +9,7 @@ import jsonexport from 'jsonexport';
 const czechRacesPath = `./downloads/czech_races_data.json`;
 const polishHorsesPath = `./downloads/polish_horses_data.json`;
 
-cron.schedule('20 09 * * *', async () => {
+cron.schedule('00 18 * * *', async () => {
   const today = new Date().toJSON().slice(0, 10);
   if (!fs.existsSync(polishHorsesPath)) {
     console.log('not exist');
