@@ -1,6 +1,7 @@
 import axios from 'axios';
 import util from 'node:util';
-import {writeToCsv} from './helpers.js';
+import {convertDate, writeToCsv} from './helpers.js';
+import {map, propOr} from 'ramda';
 
 //get horse scores
 export const getHorsesScores = async (horseId) => {
@@ -19,7 +20,32 @@ export const getHorsesScores = async (horseId) => {
     })
     .catch((error) => console.log(`can not fetch races data of horse with id number ${horseId} due to:`, error));
   console.log(`horse id number: ${horseId} - scores have been fetched`);
-  return {horseCareerData: horseCareerData || {}, horseRacesData: horseRacesData || []};
+  const races = map((data) => {
+    const {id, name, order, place, placeBefore, jockeyWeight, record, prize, jockey, horse, trainer, race} = data;
+    const {date, prizes, currency, temperature, weather, description, country, category, city, style, trackType} = race;
+    const jockeyName = `${propOr('', 'firstName', jockey)} ${propOr('', 'lastName', jockey)}`;
+    const trainerName = `${propOr('', 'firstName', trainer)} ${propOr('', 'lastName', trainer)}`;
+    const raceCountry = propOr('', 'englishName', country);
+    const raceCity = propOr('', 'name', city);
+
+    return {
+      raceId: id,
+      raceDate: convertDate(date),
+      year: convertDate(date).slice(6, 10),
+      siteId: '',
+      name: name || '',
+      order: order || '',
+      place: place || '',
+      prize: prize || '',
+      jockey: jockeyName,
+      jockeyWeight,
+      time: '',
+      trainer: trainerName,
+      country: raceCountry,
+      city: raceCity,
+    };
+  }, horseRacesData);
+  return {horseCareerData: horseCareerData || {}, races};
 };
 
 export const getHorseData = async (horseId) => {
@@ -32,7 +58,40 @@ export const getHorseData = async (horseId) => {
       return response;
     })
     .catch((error) => `no data with scores of horse ${horseId}: ${error}`);
-  return {horseData: horseData || {}, horseScores};
+  const {
+    id,
+    name,
+    suffix,
+    dateOfBirth,
+    sex,
+    sexForStatistics,
+    breed,
+    horseFromPolishBreeding,
+    note,
+    mother,
+    father,
+    color,
+    trainer,
+    raceOwners,
+    breeders,
+    raceSex,
+  } = horseData;
+  const basicInfo = {
+    id,
+    name,
+    dateOfBirth,
+    sex,
+    breed,
+    horseFromPolishBreeding,
+    breeders: map((breeder) => ({name: propOr('', 'name', breeder)}), breeders),
+    suffix,
+    mother: {name: mother.name, sex: mother.sex, breed: mother.breed, suffix: mother.suffix},
+    father: {name: father.name, sex: father.sex, breed: father.breed, suffix: father.suffix},
+    color,
+    trainer: `${propOr('', 'firstName', trainer)} ${propOr('', 'lastName', trainer)}`,
+    raceOwners: map((owner) => ({name: propOr('', 'name', owner)}), raceOwners),
+  };
+  return {...basicInfo, ...horseScores};
 };
 
 export const getAllPolishHorses = async () => {

@@ -1,14 +1,15 @@
 import {getAllCzechScores, getAllPagesIds, getScoresFromNewButtons} from './library/czechWebFn.js';
 import {getAllPolishHorses, getHorseData} from './library/polishHorsesFn.js';
 import cron from 'node-cron';
-import {checkNewPolishHorses, writeToJson} from './library/helpers.js';
-import {map, path, includes, pipe, filter, isNotNil, prop, flatten, concat} from 'ramda';
+import {checkNewPolishHorses, mergeCzechAndPolishData, writeToJson} from './library/helpers.js';
+import {map, path, includes, pipe, filter, isNotNil, prop, flatten, concat, propOr} from 'ramda';
 import fs from 'node:fs';
+import jsonexport from 'jsonexport';
 
 const czechRacesPath = `./downloads/czech_races_data.json`;
 const polishHorsesPath = `./downloads/polish_horses_data.json`;
 
-cron.schedule('00 18 * * *', async () => {
+cron.schedule('20 09 * * *', async () => {
   const today = new Date().toJSON().slice(0, 10);
   if (!fs.existsSync(polishHorsesPath)) {
     console.log('not exist');
@@ -24,7 +25,7 @@ cron.schedule('00 18 * * *', async () => {
     console.log('exist');
     const allNewHorsesIdsFetched = await checkNewPolishHorses();
     const oldHorsesData = JSON.parse(fs.readFileSync(polishHorsesPath, {encoding: 'utf8', flag: 'r'}));
-    const currentHorsesIds = map((horse) => path(['horseData', 'id'], horse), oldHorsesData);
+    const currentHorsesIds = map((horse) => path(['id'], horse), oldHorsesData);
     const horsesToBeFetched = pipe(
       map((id) => (!includes(id, currentHorsesIds) ? id : null)),
       filter((id) => isNotNil(id))
@@ -53,13 +54,18 @@ cron.schedule('00 18 * * *', async () => {
     await writeToJson(data, 'czech_races_data');
   } else {
     const oldData = JSON.parse(fs.readFileSync(czechRacesPath, {encoding: 'utf8', flag: 'r'}));
-    const oldIds = map((element) => prop('id', element), oldData);
+    const oldIds = flatten(
+      map((element) => {
+        const races = propOr([], 'races', element);
+        return map((race) => prop('raceId', race), races);
+      }, oldData)
+    );
     //get new races
     const newIdList = await getAllPagesIds()
       .then((res) => flatten(res))
       .catch((err) => console.log(err));
     const newButtons = pipe(
-      map((element) => (!includes(element.id, oldIds) ? element : null)),
+      map((element) => (!includes(element.raceId, oldIds) ? element : null)),
       filter((id) => isNotNil(id))
     )(newIdList);
     const updatedData = await getScoresFromNewButtons(newButtons)
@@ -70,4 +76,25 @@ cron.schedule('00 18 * * *', async () => {
     await fs.unlinkSync(czechRacesPath);
     await writeToJson(updatedData, 'czech_races_data');
   }
+  setTimeout(async () => {
+    if (fs.existsSync(polishHorsesPath) && fs.existsSync(czechRacesPath)) {
+      console.log('checking to merge');
+      const parsedPolishData = JSON.parse(fs.readFileSync(polishHorsesPath, {encoding: 'utf8', flag: 'r'}));
+      const parsedCzechData = JSON.parse(fs.readFileSync(czechRacesPath, {encoding: 'utf8', flag: 'r'}));
+      const mergedAllData = mergeCzechAndPolishData(parsedPolishData, parsedCzechData);
+      const csvPath = `./csv/allData_${today}`;
+      await jsonexport(mergedAllData, function (err, csv) {
+        if (err) return console.error(err);
+        fs.writeFile(csvPath, csv, 'utf-8', (err) => {
+          if (err) {
+            throw err;
+          } else {
+            console.log(`File written successfully with ${mergedAllData.length} horses`);
+          }
+        });
+      });
+    } else {
+      console.log('not every data');
+    }
+  }, 5000);
 });

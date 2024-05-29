@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
-import {transformRowsArray, writeToCsv} from './helpers.js';
+import {cleanData, transformCzechDataToHorsesList, transformRowsArray} from './helpers.js';
 import util from 'node:util';
-import {always, cond, equals, find, flatten, last, map, pipe, prop, propEq, slice, split} from 'ramda';
+import {always, cond, equals, find, flatten, last, map, pipe, prop, propEq, split} from 'ramda';
 
 const LINKS = [
   {baseUrl: `http://dostihyjc.cz/index.php?page=5&stat=1`, country: 'CR', startYear: 1989},
@@ -116,14 +116,21 @@ export const getAllCzechScores = async () => {
 
   for (let i = 0; i < LINKS.length; i++) {
     await getScores(LINKS[i].baseUrl, LINKS[i].startYear)
-      .then((res) => data.push(map((element) => map((el) => ({country: LINKS[i].country, ...el}), element), res)))
+      .then((res) => {
+        const transformed = pipe(
+          map((element) => map((el) => ({siteId: LINKS[i].country, ...el}), element)),
+          flatten,
+          transformCzechDataToHorsesList
+        )(res);
+        return data.push(transformed);
+      })
       .catch(console.error);
   }
 
   //console.log(util.inspect(data, {depth: null, colors: true}));
 
   //await writeToCsv(data, 'czech_races_data');
-  return flatten(data);
+  return pipe(flatten, cleanData)(data);
 };
 
 //get buttons ids from year page
@@ -169,12 +176,12 @@ export const getIdButtons = async (baseUrl, firstYear) => {
     await getIds(page)
       .then((res) => {
         const year = currentPage;
-        const country = cond([
+        const siteId = cond([
           [equals('stat=1'), always('CR')],
           [equals('stat=2'), always('Slovensko')],
           [equals('stat=3'), always('abroad')],
         ])(pipe(split('/'), last, split('&'), last)(baseUrl));
-        return dataAll.unshift(map((id) => ({id, country, year}), res));
+        return dataAll.unshift(map((id) => ({raceId: id, siteId, year}), res));
       })
       .catch((err) => console.log(err));
 
@@ -205,8 +212,8 @@ export const getAllPagesIds = async () => {
 export const getScoresFromNewButtons = async (buttons) => {
   let data = [];
   for (let i = 0; i < buttons.length; i++) {
-    const {id, country, year} = buttons[i];
-    console.log('id btn', id);
+    const {raceId, siteId, year} = buttons[i];
+    console.log('id btn', raceId);
     const browser = await puppeteer.launch({
       headless: false,
       defaultViewport: null,
@@ -214,17 +221,17 @@ export const getScoresFromNewButtons = async (buttons) => {
 
     // Open a new page
     const page = await browser.newPage();
-    const currentUrl = `${pipe(find(propEq(country, 'country')), prop('baseUrl'))(LINKS)}&rok=${year}`;
+    const currentUrl = `${pipe(find(propEq(siteId, 'country')), prop('baseUrl'))(LINKS)}&rok=${year}`;
     await page.goto(currentUrl, {
       timeout: 60000,
       waitUntil: 'domcontentloaded',
     });
-    await page.click(`text=${id}`);
+    await page.click(`text=${raceId}`);
     await scrapeScores(page)
       .then((res) => {
-        return data.push({id, country, year, ...res});
+        return data.push({raceId, siteId, year, ...res});
       })
-      .catch((err) => console.log(`can not take data from page ${id}: ${err}`));
+      .catch((err) => console.log(`can not take data from page ${raceId}: ${err}`));
     await browser.close();
   }
   return data;
